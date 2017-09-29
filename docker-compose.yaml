@@ -4,6 +4,7 @@ redis:
         - "./tmp/redis:/data"
 my:
     build: .
+    dockerfile: Dockerfile-dev
     ports:
         - 5000:5000
         - 5001:5001
