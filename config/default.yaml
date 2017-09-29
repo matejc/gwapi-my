@@ -1,0 +1,207 @@
+gatewayapi:
+    publishers:  # publishers publish endpoints to the outside world
+        owe-machine:  # name of the publisher
+            type: express  # type of the publisher
+            options:
+                port: 5000  # listen port of publisher
+                basePath: /v1  # base path for each route in this publisher
+        secret-pass:  # name of the publisher
+            type: express  # type of the publisher
+            options:
+                port: 5001  # listen port of publisher
+                basePath: /v1  # base path for each route in this publisher
+        swagger:  # name of the publisher
+            type: express  # type of the publisher
+            options:
+                port: 5555  # listen port of publisher
+    auth:  # auth settings
+        security:  # auth definitions
+            uuid:
+                type: apiKey
+                error: BadRequest
+                options:  # apiKey options
+                    in: header
+        directory: ./auth  # contains files named `${auth.name}.js`, the auth function is the first thing executed when call comes in through publisher
+    paths:  # paths or better - endpoints
+        oweList:  # lambda endpoint: the action function is called after
+            connector: lambdas  # core connector
+            publishers:
+                - owe-machine
+            options:
+                path: /owe/{prefix}/{name}  # specify endpoint path
+                method: get  # method for this endpoint
+                parameters:  # input parameters
+                    - name: prefix
+                      in: path
+                      required: true
+                      type: string
+                      pattern: "[a-zA-Z0-9_]+"
+                    - name: name
+                      in: path
+                      required: true
+                      type: string
+                      pattern: "[a-zA-Z0-9_]+"
+                result:  # details of schema for succesful respond (http code 200)
+                    description: all ok  # description for output definition
+                    reference: OweListOut  # reference to the definition
+                errors:
+                    - NotFound
+                    - BadRequest
+        oweGet:  # lambda endpoint: the action function is called after
+            connector: lambdas  # core connector
+            publishers:
+                - owe-machine
+            options:
+                path: /owe/{prefix}/{name}/total  # specify endpoint path
+                method: get  # method for this endpoint
+                parameters:  # input parameters
+                    - name: prefix
+                      in: path
+                      required: true
+                      type: string
+                      pattern: "[a-zA-Z0-9_]+"
+                    - name: name
+                      in: path
+                      required: true
+                      type: string
+                      pattern: "[a-zA-Z0-9_]+"
+                result:  # details of schema for succesful respond (http code 200)
+                    description: all ok  # description for output definition
+                    reference: OweGetOut  # reference to the definition
+                errors:
+                    - NotFound
+                    - BadRequest
+        oweAdd:  # lambda endpoint: the action function is called after
+            connector: lambdas  # core connector
+            publishers:
+                - owe-machine
+            options:
+                path: /owe/{prefix}/{name}  # specify endpoint path
+                method: post  # method for this endpoint
+                parameters:  # input parameters
+                    - name: prefix
+                      in: path
+                      required: true
+                      type: string
+                      pattern: "[a-zA-Z0-9_]+"
+                    - name: name
+                      in: path
+                      required: true
+                      type: string
+                      pattern: "[a-zA-Z0-9_]+"
+                    - name: value
+                      in: body
+                      required: true
+                      schema:
+                          type: object
+                          properties:
+                              value:
+                                  type: number
+                result:  # details of schema for succesful respond (http code 200)
+                    description: all ok  # description for output definition
+                    reference: OweAddOut  # reference to the definition
+                errors:
+                    - NotFound
+                    - BadRequest
+        secretGet:  # lambda endpoint: the action function is called after
+            connector: lambdas  # core connector
+            publishers:
+                - secret-pass
+            options:
+                path: /secret/{uuid}  # specify endpoint path
+                method: get  # method for this endpoint
+                parameters:  # input parameters
+                    - name: uuid
+                      in: path
+                      required: true
+                      type: string
+                      pattern: "[a-zA-Z0-9-]+"
+                result:  # details of schema for succesful respond (http code 200)
+                    description: all ok  # description for output definition
+                    reference: SecretGetOut  # reference to the definition
+                errors:
+                    - NotFound
+                    - BadRequest
+        secretAdd:  # lambda endpoint: the action function is called after
+            connector: lambdas  # core connector
+            publishers:
+                - secret-pass
+            options:
+                path: /secret  # specify endpoint path
+                method: post  # method for this endpoint
+                parameters:  # input parameters
+                    - name: value
+                      in: body
+                      required: true
+                      schema:
+                          type: object
+                          properties:
+                              value:
+                                  type: string
+                result:  # details of schema for succesful respond (http code 200)
+                    description: all ok  # description for output definition
+                    reference: SecretAddOut  # reference to the definition
+                errors:
+                    - NotFound
+                    - BadRequest
+    actions:
+        directory: ./actions  # contains files named `${path.id}.js`, the action function is executed when call comes in through publisher after auth function
+    errors:
+        directory: ./errors  # contains files named `${error.name}.js`, the match function matches the error and return matching error or default error
+        default: InternalServerError  # if no error matches, returns this error
+    outputs:
+        owe-machine:  # name of the output
+            type: swagger  # outputs swagger.json
+            publisher: owe-machine  # output contains this publishers endpoints
+            publishers:  # same as endpoint.publishers
+                - swagger
+            options:
+                dereferenceInternal: false  # if true, definitions are included in each of the paths - no references, makes swagger.json bigger
+                defaults:  # defaults for the swagger.json
+                    host: localhost:5000
+                    basePath: /v1
+                    info:
+                        title: owe-machine
+        secret-pass:  # name of the output
+            type: swagger  # outputs swagger.json
+            publisher: secret-pass  # output contains this publishers endpoints
+            publishers:  # same as endpoint.publishers
+                - swagger
+            options:
+                dereferenceInternal: false  # if true, definitions are included in each of the paths - no references, makes swagger.json bigger
+                defaults:  # defaults for the swagger.json
+                    host: localhost:5001
+                    basePath: /v1
+                    info:
+                        title: secret-pass
+    definitions:  # extra definitions, used for endpoint.result.reference
+        OweAddOut:
+            type: string
+        OweOut:
+            type: object
+            properties:
+                time:
+                    type: string
+                amount:
+                    type: string
+        OweGetOut:
+            type: object
+            properties:
+                total:
+                    type: string
+        OweListOut:
+            type: array
+            items:
+                $ref: "#/definitions/OweOut"
+        SecretGetOut:
+            type: object
+            properties:
+                value:
+                    type: string
+        SecretAddOut:
+            type: object
+            properties:
+                uuid:
+                    type: string
+                ttl:
+                    type: number

@@ -1,0 +1,16 @@
+{
+    "name": "gwapi-my",
+    "version": "1.0.0",
+    "dependencies": {
+        "gatewayapi": "git://github.com/GateHubNet/gateway-api#master",
+        "redis": "^2.8.0",
+        "redis-rate-limiter": "^1.0.5",
+        "uuid": "^3.1.0"
+    },
+    "scripts": {
+        "start": "node --harmony index.js",
+        "validate": "node --harmony validate.js"
+    },
+    "author": "Matej Cotman <cotman.matej@gmail.com>",
+    "license": "UNLICENSED"
+}
