@@ -1,0 +1,10 @@
+gatewayapi:
+    outputs:
+        owe-machine:  # name of the output
+            options:
+                defaults:  # defaults for the swagger.json
+                    host: apis.two.matejc.com
+        secret-pass:  # name of the output
+            options:
+                defaults:  # defaults for the swagger.json
+                    host: apis.two.matejc.com
